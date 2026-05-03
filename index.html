@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KaraokeBox — Финансовая модель</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0f1923;--card:#1a2733;--border:#2a3a4a;--text:#dce4ec;--muted:#94a8b8;--accent:#e91e63;--green:#66bb6a;--red:#ef5350;--orange:#ffa726;--header:#880e4f;--dim:#5a6a7a}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden;font-size:12px}
+.sidebar{width:220px;background:#111d27;border-right:1px solid var(--border);flex-shrink:0}
+.sidebar h2{padding:16px;font-size:13px;color:var(--accent);border-bottom:1px solid var(--border)}
+.nav-item{padding:11px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:.2s;display:flex;align-items:center;gap:8px}
+.nav-item:hover{background:#1a2a3a}.nav-item.active{background:var(--header);color:#fff;font-weight:600}
+.main{flex:1;overflow-y:auto;padding:20px}
+.panel{display:none}.panel.active{display:block}
+.section{background:var(--card);border:1px solid var(--border);border-radius:6px;margin-bottom:14px;overflow:hidden}
+.section-header{background:#1a0a1a;padding:9px 14px;font-weight:600;font-size:11px;color:var(--accent);cursor:pointer;display:flex;justify-content:space-between}
+.section-header:hover{background:#2a1a2a}
+.section-body{padding:12px 14px}
+.row{display:flex;align-items:center;margin-bottom:5px;gap:8px}
+.row label{width:220px;flex-shrink:0;color:var(--muted)}
+.row input[type=number]{width:80px;background:#0d1820;border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:3px;text-align:right}
+.row input[type=text]{width:140px;background:#0d1820;border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:3px}
+.row input:focus{border-color:var(--accent);outline:none}
+.row .unit{font-size:10px;color:var(--dim);width:22px}
+.row .val{font-weight:600;min-width:70px;text-align:right}
+.val.green{color:var(--green)}.val.red{color:var(--red)}.val.accent{color:var(--accent)}
+.season-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin-top:6px}
+.season-grid input{width:100%;background:#0d1820;border:1px solid var(--border);color:var(--text);padding:3px 2px;border-radius:3px;text-align:center;font-size:10px}
+.season-grid .ml{text-align:center;font-size:9px;color:var(--dim);margin-bottom:2px}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{opacity:1;cursor:pointer;filter:invert(0.8)}
+table{width:100%;border-collapse:collapse}
+th{background:#1a0a1a;color:var(--accent);padding:5px 7px;text-align:right;font-weight:600;position:sticky;top:0;white-space:nowrap;z-index:2}
+th:first-child{text-align:left}
+td{padding:4px 7px;border-bottom:1px solid #1e2e3e;text-align:right;white-space:nowrap}
+td:first-child{text-align:left;color:var(--muted)}
+tr.total td{font-weight:700;background:#0d1a28;border-bottom:2px solid var(--border)}
+tr.total td:first-child{color:var(--accent)}
+tr.dim td{color:var(--dim)}
+tr.yr-header{cursor:pointer}
+tr.yr-header td{background:#111d27;font-weight:600;color:var(--accent);text-align:center}
+tr.yr-header:hover td{background:#152535}
+tr.month-row{display:none}
+tr.month-row td{color:var(--muted);background:#0c141c}
+tr.month-row td:first-child{padding-left:20px}
+tr.month-row.open{display:table-row}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:14px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:14px;text-align:center}
+.kpi .label{font-size:10px;color:var(--muted);margin-bottom:4px}
+.kpi .value{font-size:20px;font-weight:700}
+.kpi .value.green{color:var(--green)}.kpi .value.red{color:var(--red)}.kpi .value.accent{color:var(--accent)}
+.kpi .sub{font-size:10px;color:var(--muted);margin-top:3px}
+.partner-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:14px}
+.partner-card h3{font-size:12px;margin-bottom:8px}
+.bar-container{height:14px;background:#0d1820;border-radius:7px;overflow:hidden;margin:5px 0}
+.bar{height:100%;border-radius:7px;transition:width .5s}
+.bar.pink{background:linear-gradient(90deg,#880e4f,#e91e63)}
+.bar.orange{background:linear-gradient(90deg,#e65100,#ffa726)}
+h1{font-size:16px;margin-bottom:3px}
+.subtitle{font-size:11px;color:var(--muted);margin-bottom:16px}
+.collapsible .section-body{display:none}
+.collapsible.open .section-body{display:block}
+.toggle-arrow{transition:transform .3s}
+.collapsible.open .toggle-arrow{transform:rotate(180deg)}
+.btn{background:var(--header);color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:11px;margin-right:6px}
+.btn:hover{background:#ad1457}
+.btn-bar{margin-bottom:10px}
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:30px;width:340px;text-align:center}
+.modal h2{color:var(--accent);margin-bottom:6px;font-size:18px}
+.modal p{color:var(--muted);font-size:11px;margin-bottom:20px}
+.modal input{width:100%;background:#0d1820;border:1px solid var(--border);color:var(--text);padding:10px;border-radius:6px;font-size:13px;margin-bottom:12px;text-align:center}
+.modal input:focus{border-color:var(--accent);outline:none}
+.modal .btn-lg{width:100%;padding:10px;font-size:13px;border-radius:6px;margin-bottom:8px}
+.modal .btn-guest{background:#2a3a4a}
+.role-badge{font-size:9px;padding:2px 8px;border-radius:10px;margin-left:8px}
+.role-admin{background:#1b5e20;color:#a5d6a7}
+.role-guest{background:#4a3000;color:#ffcc80}
+</style>
+</head>
+<body>
+<div id="login-modal" class="modal-overlay">
+<div class="modal"><h2>🎤 KARAOKE BOX</h2><p>Финансовая модель · Lisbon</p>
+<input type="password" id="login-pass" placeholder="Пароль" onkeydown="if(event.key==='Enter')doLogin()">
+<button class="btn btn-lg" onclick="doLogin()">Администратор</button>
+<button class="btn btn-lg btn-guest" onclick="doGuest()">Гость (просмотр)</button>
+</div></div>
+
+<div class="sidebar">
+<h2>🎤 KARAOKE <span id="role-badge" class="role-badge"></span></h2>
+<div class="nav-item active" onclick="showPanel('params')"><span>⚙</span> Параметры</div>
+<div class="nav-item" onclick="showPanel('pl')"><span>📊</span> P&L</div>
+<div class="nav-item" onclick="showPanel('partners')"><span>🤝</span> Партнёры</div>
+<div class="nav-item" onclick="showPanel('analysis')"><span>📈</span> Анализ</div>
+<div class="nav-item" onclick="doLogout()" style="margin-top:auto;color:var(--dim)"><span>🚪</span> Выйти</div>
+</div>
+<div class="main">
+
+<div id="params" class="panel active">
+<h1>Параметры</h1><p class="subtitle">Private Karaoke Box · Lisbon · In-House Bar · No Kitchen</p>
+
+<div class="section collapsible"><div class="section-header" onclick="toggle(this)">Архив версий<span class="toggle-arrow">▼</span></div><div class="section-body">
+<div class="row"><label>Сохранить как:</label><input type="text" id="arch_name" placeholder="Название"><button class="btn" onclick="archSave()" style="margin-left:6px">💾</button></div>
+<div id="arch_list" style="margin-top:8px"></div>
+</div></div>
+
+<div class="section collapsible open"><div class="section-header" onclick="toggle(this)">CAPEX (инвестиции)<span class="toggle-arrow">▼</span></div><div class="section-body">
+<div class="row"><label>Fit-out и звукоизоляция</label><input type="number" id="c1" value="120000" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Караоке техника</label><input type="number" id="c2" value="45000" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Консоли (PS5)</label><input type="number" id="c3" value="5000" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Бар: оборудование</label><input type="number" id="c4" value="25000" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Мебель и тематика</label><input type="number" id="c5" value="30000" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Лицензии и юридика</label><input type="number" id="c6" value="10000" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Депозит + pre-opening</label><input type="number" id="c7" value="25000" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Оборотный капитал</label><input type="number" id="c8" value="30000" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label><b>ИТОГО CAPEX</b></label><span class="val accent" id="capex_t"></span></div>
+</div></div>
+
+<div class="section collapsible open"><div class="section-header" onclick="toggle(this)">Выручка — комнаты<span class="toggle-arrow">▼</span></div><div class="section-body">
+<div class="row"><label>Кол-во комнат</label><input type="number" id="rooms" value="7" oninput="calc()"></div>
+<div class="row"><label>Часов работы/день</label><input type="number" id="hrs" value="10" oninput="calc()"></div>
+<div class="row"><label>Цена/час (средняя)</label><input type="number" id="phr" value="60" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Загрузка (стабилиз.)</label><input type="number" id="occ" value="62" oninput="calc()"><span class="unit">%</span></div>
+<div class="row"><label>Дней/мес</label><input type="number" id="dmo" value="30" oninput="calc()"></div>
+<div class="row"><label><b>Выручка комнат/мес</b></label><span class="val accent" id="rv_rooms"></span></div>
+</div></div>
+
+<div class="section collapsible open"><div class="section-header" onclick="toggle(this)">Выручка — бар и доп.<span class="toggle-arrow">▼</span></div><div class="section-body">
+<div class="row"><label>Бар</label><input type="number" id="rv_bar" value="12000" oninput="calc()"><span class="unit">€/м</span></div>
+<div class="row"><label>Декор/тематика</label><input type="number" id="rv_dec" value="3000" oninput="calc()"><span class="unit">€/м</span></div>
+<div class="row"><label>Party packs</label><input type="number" id="rv_pty" value="2500" oninput="calc()"><span class="unit">€/м</span></div>
+<div class="row"><label>Gaming add-on</label><input type="number" id="rv_gam" value="1500" oninput="calc()"><span class="unit">€/м</span></div>
+<div class="row"><label><b>ИТОГО выручка/мес (gross)</b></label><span class="val green" id="rv_tot"></span></div>
+</div></div>
+
+<div class="section collapsible open"><div class="section-header" onclick="toggle(this)">Сезонность<span class="toggle-arrow">▼</span></div><div class="section-body">
+<p style="color:var(--muted);margin-bottom:8px;font-size:11px">1.0 = базовая загрузка</p>
+<div class="season-grid">
+<div class="ml">Янв</div><div class="ml">Фев</div><div class="ml">Мар</div><div class="ml">Апр</div><div class="ml">Май</div><div class="ml">Июн</div><div class="ml">Июл</div><div class="ml">Авг</div><div class="ml">Сен</div><div class="ml">Окт</div><div class="ml">Ноя</div><div class="ml">Дек</div>
+<input type="number" id="ss1" value="0.80" step="0.05" oninput="calc()"><input type="number" id="ss2" value="0.85" step="0.05" oninput="calc()"><input type="number" id="ss3" value="0.90" step="0.05" oninput="calc()"><input type="number" id="ss4" value="0.95" step="0.05" oninput="calc()"><input type="number" id="ss5" value="1.00" step="0.05" oninput="calc()"><input type="number" id="ss6" value="1.10" step="0.05" oninput="calc()"><input type="number" id="ss7" value="0.85" step="0.05" oninput="calc()"><input type="number" id="ss8" value="0.75" step="0.05" oninput="calc()"><input type="number" id="ss9" value="1.00" step="0.05" oninput="calc()"><input type="number" id="ss10" value="1.05" step="0.05" oninput="calc()"><input type="number" id="ss11" value="1.15" step="0.05" oninput="calc()"><input type="number" id="ss12" value="1.20" step="0.05" oninput="calc()">
+</div></div></div>
+
+<div class="section collapsible"><div class="section-header" onclick="toggle(this)">OPEX (ежемесячные расходы)<span class="toggle-arrow">▼</span></div><div class="section-body">
+<div class="row"><label>Аренда (230м²)</label><input type="number" id="o_rent" value="4500" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>ФОТ (3-4 чел.+налоги)</label><input type="number" id="o_staff" value="9000" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Bar COGS</label><input type="number" id="o_bpct" value="28" oninput="calc()"><span class="unit">%</span></div>
+<div class="row"><label>Коммуналка</label><input type="number" id="o_util" value="2000" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Лицензия SPA/GDA</label><input type="number" id="o_lic" value="650" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Маркетинг</label><input type="number" id="o_mkt" value="1750" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Страховка+бухгалтерия</label><input type="number" id="o_ins" value="1000" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Обслуживание+расходники</label><input type="number" id="o_mnt" value="900" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Консоли/игры</label><input type="number" id="o_con" value="75" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label><b>ИТОГО OPEX фикс.</b></label><span class="val accent" id="opex_f"></span></div>
+</div></div>
+
+<div class="section collapsible"><div class="section-header" onclick="toggle(this)">Налоги и рост<span class="toggle-arrow">▼</span></div><div class="section-body">
+<div class="row"><label>IVA</label><input type="number" id="iva" value="23" oninput="calc()"><span class="unit">%</span></div>
+<div class="row"><label>IRC (налог на прибыль)</label><input type="number" id="tax" value="21" oninput="calc()"><span class="unit">%</span></div>
+<div class="row"><label>Амортизация</label><input type="number" id="amy" value="5" oninput="calc()"><span class="unit">лет</span></div>
+<div class="row"><label>Рост выручки г/г</label><input type="number" id="grv" value="1.05" step="0.05" oninput="calc()"><span class="unit">×</span></div>
+<div class="row"><label>Рост расходов г/г</label><input type="number" id="gre" value="1.03" step="0.01" oninput="calc()"><span class="unit">×</span></div>
+<div class="row"><label>Горизонт</label><input type="number" id="hor" value="5" oninput="calc()"><span class="unit">лет</span></div>
+</div></div>
+
+<div class="section collapsible"><div class="section-header" onclick="toggle(this)">Партнёры<span class="toggle-arrow">▼</span></div><div class="section-body">
+<div class="row"><label>П1: доля инвестиций</label><input type="number" id="p1i" value="50" oninput="calc()"><span class="unit">%</span></div>
+<div class="row"><label>П1: прибыль после возврата</label><input type="number" id="p1a" value="50" oninput="calc()"><span class="unit">%</span></div>
+<div class="row"><label>П2: доля инвестиций</label><input type="number" id="p2i" value="50" oninput="calc()"><span class="unit">%</span></div>
+<div class="row"><label>П2: прибыль после возврата</label><input type="number" id="p2a" value="50" oninput="calc()"><span class="unit">%</span></div>
+<div class="row"><label>Налог на дивиденды</label><input type="number" id="dtx" value="28" oninput="calc()"><span class="unit">%</span></div>
+</div></div>
+</div>
+
+<div id="pl" class="panel"><h1>P&L</h1><p class="subtitle">Кликните год для помесячной детализации</p>
+<div class="btn-bar"><button class="btn" onclick="exportXLS()">⬇ Excel</button></div>
+<div class="kpi-grid" id="pl-kpi"></div><div style="overflow-x:auto"><table id="pl-table"></table></div></div>
+
+<div id="partners" class="panel"><h1>Партнёры</h1><p class="subtitle">Возврат и дивиденды</p><div id="p-content"></div></div>
+
+<div id="analysis" class="panel"><h1>Анализ</h1><p class="subtitle">Breakeven и чувствительность</p>
+<div class="kpi-grid" id="an-kpi"></div>
+<div class="section"><div class="section-header" style="cursor:default">Матрица EBITDA/мес (цена/час × загрузка)</div>
+<div class="section-body" style="overflow-x:auto"><table id="sens-t"></table></div></div>
+<div class="section"><div class="section-header" style="cursor:default">Помесячный breakeven</div>
+<div class="section-body" style="overflow-x:auto"><table id="mo-be"></table></div></div>
+</div>
+
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const V=id=>parseFloat($(id)?.value)||0;
+const fmt=n=>Math.round(n).toLocaleString('ru-RU');
+const MN=['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+
+const ADMIN_PASS='karaoke2026';
+let userRole=sessionStorage.getItem('kr_role')||'';
+function doLogin(){if($('login-pass').value===ADMIN_PASS){userRole='admin';sessionStorage.setItem('kr_role','admin');applyRole();archRender();$('login-modal').style.display='none'}else{$('login-pass').style.borderColor='var(--red)';$('login-pass').value=''}}
+function doGuest(){userRole='guest';sessionStorage.setItem('kr_role','guest');applyRole();archRender();$('login-modal').style.display='none'}
+function applyRole(){const b=$('role-badge');b.textContent=userRole==='admin'?'Админ':'Гость';b.className='role-badge '+(userRole==='admin'?'role-admin':'role-guest');
+document.querySelectorAll('#params input,#params select').forEach(el=>{if(el.id==='arch_name'||el.id==='login-pass')return;if(userRole==='guest'){el.disabled=true;el.style.opacity='.5'}else{el.disabled=false;el.style.opacity='1'}});
+if(userRole==='admin'){const a=$('arch_name');if(a){a.disabled=false;a.style.opacity='1'}}
+if(userRole==='guest'){const s=$('arch_name')?.closest('.row');if(s)s.style.display='none'}}
+function doLogout(){sessionStorage.removeItem('kr_role');location.reload()}
+if(userRole){$('login-modal').style.display='none';applyRole()}
+function showPanel(id){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));$(id).classList.add('active');const m={params:'Параметры',pl:'P&L',partners:'Партнёры',analysis:'Анализ'};document.querySelectorAll('.nav-item').forEach(n=>{if(n.textContent.includes(m[id]))n.classList.add('active')})}
+function toggle(el){el.parentElement.classList.toggle('open')}
+function toggleYear(t,y){document.querySelectorAll('#'+t+' tr.month-row.yr-'+y).forEach(r=>r.classList.toggle('open'))}
+
+let D={};
+function calc(){
+const capex=V('c1')+V('c2')+V('c3')+V('c4')+V('c5')+V('c6')+V('c7')+V('c8');
+$('capex_t').textContent=fmt(capex)+' €';
+const rooms=V('rooms'),hrs=V('hrs'),phr=V('phr'),occ=V('occ')/100,dmo=V('dmo');
+const rvR=rooms*hrs*phr*occ*dmo;$('rv_rooms').textContent=fmt(rvR)+' €';
+const rvB=V('rv_bar'),rvD=V('rv_dec'),rvP=V('rv_pty'),rvG=V('rv_gam');
+const rvX=rvB+rvD+rvP+rvG,rvT=rvR+rvX;$('rv_tot').textContent=fmt(rvT)+' €';
+const oR=V('o_rent'),oS=V('o_staff'),oBp=V('o_bpct')/100,oU=V('o_util'),oL=V('o_lic'),oM=V('o_mkt'),oI=V('o_ins'),oN=V('o_mnt'),oC=V('o_con');
+const opF=oR+oS+oU+oL+oM+oI+oN+oC;$('opex_f').textContent=fmt(opF)+' €';
+const iva=V('iva')/100,tx=V('tax')/100,amY=V('amy'),grv=V('grv'),gre=V('gre'),hor=Math.max(1,Math.min(15,Math.round(V('hor'))));
+const sea=[];for(let i=1;i<=12;i++)sea.push(V('ss'+i));
+const amM=capex/(amY*12);
+const YRS=[];for(let i=0;i<hor;i++)YRS.push(2026+i);
+const MIY=[5,...Array(hor-1).fill(12)],MS=[7,...Array(hor-1).fill(0)];
+let YD={};
+for(let yi=0;yi<hor;yi++){const yr=YRS[yi],nmx=MIY[yi],ms=MS[yi];
+const cG=Math.pow(grv,yi),cE=Math.pow(gre,yi);let mo=[];
+for(let m=0;m<nmx;m++){const mi=ms+m,sc=sea[mi];
+const mRG=(rvR*sc+rvX*sc)*cG,mRN=mRG/(1+iva),mBC=rvB*sc*cG/(1+iva)*oBp;
+const mOp=opF*cE+mBC,mEB=mRN-mOp,mPT=mEB-amM,mTx=Math.max(mPT*tx,0),mNP=mEB-amM-mTx,mOCF=mEB-mTx;
+mo.push({month:MN[mi],rev:mRN,bc:-mBC,opex:-opF*cE,eb:mEB,amort:-amM,tax_v:-mTx,np:mNP,ocf:mOCF})}
+const sm=k=>mo.reduce((s,m)=>s+m[k],0);
+YD[yr]={months:mo,rev:sm('rev'),bc:sm('bc'),opex:sm('opex'),eb:sm('eb'),amort:sm('amort'),tax_v:sm('tax_v'),np:sm('np'),ocf:sm('ocf')}}
+D={YD,YRS,MIY,MS,capex,rvT,rvR,rvX,rvB,opF,oBp,iva,tx,amM,sea,p1i:V('p1i')/100,p2i:V('p2i')/100,p1a:V('p1a')/100,p2a:V('p2a')/100,dtx:V('dtx')/100};
+renderPL();renderPartners();renderAnalysis()}
+
+function renderPL(){const{YD,YRS}=D;const t={rev:0,eb:0,np:0,ocf:0};YRS.forEach(yr=>{t.rev+=YD[yr].rev;t.eb+=YD[yr].eb;t.np+=YD[yr].np;t.ocf+=YD[yr].ocf});
+const pd=YRS[0]+'–'+YRS[YRS.length-1];
+$('pl-kpi').innerHTML='<div class="kpi"><div class="label">Выручка ('+pd+')</div><div class="value accent">'+fmt(t.rev)+' €</div></div><div class="kpi"><div class="label">EBITDA</div><div class="value '+(t.eb>=0?'green':'red')+'">'+fmt(t.eb)+' €</div><div class="sub">'+(t.rev?(t.eb/t.rev*100).toFixed(1):0)+'%</div></div><div class="kpi"><div class="label">ЧП</div><div class="value '+(t.np>=0?'green':'red')+'">'+fmt(t.np)+' €</div></div><div class="kpi"><div class="label">Операц. CF</div><div class="value '+(t.ocf>=0?'green':'red')+'">'+fmt(t.ocf)+' €</div></div>';
+const rows=[['Выручка (без IVA)','rev','key'],['Bar COGS','bc',''],['OPEX (фикс.)','opex',''],['EBITDA','eb','key'],['Амортизация','amort',''],['Налог','tax_v',''],['Чистая прибыль','np','key'],['Операц. CF','ocf','key']];
+let h='<tr><th>Показатель</th><th>ИТОГО</th>';YRS.forEach(yr=>h+='<th>'+yr+'</th>');h+='</tr>';
+rows.forEach(([l,k,s])=>{const yv=YRS.reduce((a,yr)=>a+YD[yr][k],0);
+if(s==='key'){const c=yv>=0?'var(--green)':'var(--red)';const p=(k==='eb'||k==='np')&&t.rev?' ('+(yv/t.rev*100).toFixed(1)+'%)':'';h+='<tr style="font-weight:600"><td style="color:var(--accent)">'+l+'</td><td style="color:'+c+'">'+fmt(yv)+p+'</td>';YRS.forEach(yr=>{const v=YD[yr][k];const vc=v>=0?'var(--green)':'var(--red)';const vp=(k==='eb'||k==='np')&&YD[yr].rev?' ('+(v/YD[yr].rev*100).toFixed(1)+'%)':'';h+='<td style="color:'+vc+'">'+fmt(v)+vp+'</td>'})}
+else{h+='<tr class="dim"><td>'+l+'</td><td>'+fmt(yv)+'</td>';YRS.forEach(yr=>h+='<td>'+fmt(YD[yr][k])+'</td>')}
+h+='</tr>'});
+let cum=0;h+='<tr class="total"><td>Накопленный CF</td><td></td>';YRS.forEach((yr,i)=>{cum+=YD[yr].ocf+(i===0?-D.capex:0);h+='<td style="color:'+(cum>=0?'var(--green)':'var(--red)')+'"><b>'+fmt(cum)+'</b></td>'});h+='</tr>';
+YRS.forEach(yr=>{const md=YD[yr].months;h+='<tr class="yr-header" onclick="toggleYear(\'pl-table\','+yr+')"><td colspan="'+(YRS.length+2)+'">▼ '+yr+'</td></tr>';
+h+='<tr class="month-row yr-'+yr+'"><td></td><td></td>';md.forEach(m=>h+='<td style="color:var(--accent);font-weight:600">'+m.month+'</td>');for(let p=md.length;p<YRS.length;p++)h+='<td></td>';h+='</tr>';
+rows.forEach(([l,k,s])=>{h+='<tr class="month-row yr-'+yr+'"><td>'+l+'</td><td></td>';md.forEach(m=>{const v=m[k];const c=s==='key'?(v>=0?'color:var(--green);font-weight:600':'color:var(--red);font-weight:600'):'';h+='<td style="'+c+'">'+fmt(v)+'</td>'});for(let p=md.length;p<YRS.length;p++)h+='<td></td>';h+='</tr>'})});
+$('pl-table').innerHTML=h}
+
+function renderPartners(){const{YRS,YD,capex}=D;const ts=D.p1i+D.p2i;
+const p1l=capex*D.p1i,p2l=capex*D.p2i;let p1r=p1l,p2r=p2l,p1dt=0,p2dt=0,p1rt=0,p2rt=0;const rows=[];
+YRS.forEach(yr=>{const ocf=YD[yr].ocf,np=YD[yr].np;const r1=Math.min(p1r,Math.max(0,ocf)*D.p1i/ts),r2=Math.min(p2r,Math.max(0,ocf)*D.p2i/ts);p1r-=r1;p2r-=r2;p1rt+=r1;p2rt+=r2;
+const d1=p1r<=0&&p2r<=0?Math.max(0,np)*D.p1a:0,d2=p1r<=0&&p2r<=0?Math.max(0,np)*D.p2a:0;p1dt+=d1;p2dt+=d2;rows.push({yr,ocf,r1,r2,p1r,p2r,d1,d2})});
+let h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">';
+[[' П1',p1l,p1rt,p1dt,D.p1i,D.p1a,'var(--accent)','pink'],[' П2',p2l,p2rt,p2dt,D.p2i,D.p2a,'var(--orange)','orange']].forEach(([nm,loan,ret,div,si,sa,col,bar])=>{
+const pct=Math.min(100,ret/loan*100),roi=loan?div/loan:0,divN=div*(1-D.dtx);
+h+='<div class="partner-card"><h3 style="color:'+col+'">'+nm+' ('+Math.round(si*100)+'% → '+Math.round(sa*100)+'%)</h3><div class="row"><label>Вклад</label><span class="val">'+fmt(loan)+' €</span></div><div class="row"><label>Возврат</label><span class="val">'+fmt(ret)+' €</span></div><div class="bar-container"><div class="bar '+bar+'" style="width:'+pct+'%"></div></div><div class="row"><label>Дивиденды</label><span class="val green">'+fmt(div)+' €</span></div><div class="row"><label>На руки (−'+Math.round(D.dtx*100)+'%)</label><span class="val green">'+fmt(divN)+' €</span></div><div class="row"><label><b>ROI</b></label><span class="val accent">'+(roi*100).toFixed(1)+'%</span></div></div>'});
+h+='</div><table><tr><th>Год</th><th>OCF</th><th>П1 возвр.</th><th>П1 ост.</th><th>П1 див.</th><th>П2 возвр.</th><th>П2 ост.</th><th>П2 див.</th></tr>';
+rows.forEach(r=>h+='<tr><td>'+r.yr+'</td><td>'+fmt(r.ocf)+'</td><td>'+fmt(r.r1)+'</td><td style="color:'+(r.p1r<=0?'var(--green)':'var(--muted)')+'">'+fmt(r.p1r)+'</td><td style="color:'+(r.d1>0?'var(--green)':'var(--muted)')+'">'+(r.d1>0?fmt(r.d1):'—')+'</td><td>'+fmt(r.r2)+'</td><td style="color:'+(r.p2r<=0?'var(--green)':'var(--muted)')+'">'+fmt(r.p2r)+'</td><td style="color:'+(r.d2>0?'var(--green)':'var(--muted)')+'">'+(r.d2>0?fmt(r.d2):'—')+'</td></tr>');
+h+='</table>';$('p-content').innerHTML=h}
+
+function renderAnalysis(){const{capex,rvT,rvR,rvX,rvB,opF,oBp,iva,sea}=D;
+const rN=rvT/(1+iva),bc=rvB/(1+iva)*oBp,eb=rN-opF-bc;
+const beOcc=rN>0?(opF+bc)/rN*V('occ'):null;
+$('an-kpi').innerHTML='<div class="kpi"><div class="label">EBITDA/мес</div><div class="value '+(eb>=0?'green':'red')+'">'+fmt(eb)+' €</div><div class="sub">'+(rN?(eb/rN*100).toFixed(1):0)+'%</div></div><div class="kpi"><div class="label">Breakeven загрузка</div><div class="value accent">'+(beOcc!==null?beOcc.toFixed(0)+'%':'N/A')+'</div><div class="sub">Текущая: '+V('occ')+'%</div></div><div class="kpi"><div class="label">Окупаемость</div><div class="value accent">'+(eb>0?(capex/eb).toFixed(0)+' мес':'N/A')+'</div></div><div class="kpi"><div class="label">CAPEX</div><div class="value">'+fmt(capex)+' €</div></div>';
+// Sensitivity
+const bP=V('phr'),bO=V('occ'),ps=[-20,-10,0,10,20,30],os=[-20,-10,0,10,15,20];
+let h='<tr><th>€/ч \\ Загр.</th>';os.forEach(o=>h+='<th>'+(bO+o)+'%</th>');h+='</tr>';
+ps.forEach(p=>{const pr=bP+p;h+='<tr><td style="font-weight:600">'+pr+'€</td>';os.forEach(o=>{const oc=(bO+o)/100;const rv=(V('rooms')*V('hrs')*pr*oc*V('dmo')+rvX)/(1+iva);const e=rv-opF-rvB/(1+iva)*oBp;let bg='';if(e<0)bg='background:#3a0505;color:var(--red)';else if(e<10000)bg='background:#3a2200;color:var(--orange)';else if(e<20000)bg='background:#1a2a1a';else bg='background:#1b3a1b;color:var(--green)';const cur=p===0&&o===0?' font-weight:700;border:2px solid var(--accent)':'';h+='<td style="'+bg+';'+cur+'">'+fmt(e)+'</td>'});h+='</tr>'});
+$('sens-t').innerHTML=h;
+// Monthly breakeven
+let hm='<tr><th>Месяц</th><th>Сезон.</th><th>Выручка</th><th>OPEX</th><th>EBITDA</th><th>BE загр.</th></tr>';
+for(let m=0;m<12;m++){const sc=sea[m];const rv=(rvR*sc+rvX*sc)/(1+iva);const mbc=rvB*sc/(1+iva)*oBp;const mop=opF+mbc;const meb=rv-mop;
+const K=(rvR+rvX)/(1+iva);const be=K>0&&sc>0?mop/(K*sc)*100:null;
+hm+='<tr><td style="font-weight:600">'+MN[m]+'</td><td>'+sc.toFixed(2)+'×</td><td>'+fmt(rv)+'</td><td>'+fmt(mop)+'</td><td style="color:'+(meb>=0?'var(--green)':'var(--red)')+';font-weight:600">'+fmt(meb)+'</td><td style="color:'+(be!==null&&V('occ')>=be?'var(--green)':'var(--red)')+';font-weight:600">'+(be!==null?be.toFixed(0)+'%':'—')+'</td></tr>'}
+$('mo-be').innerHTML=hm}
+
+function exportXLS(){const name=prompt('Название:','KaraokeBox');if(!name)return;const wb=XLSX.utils.book_new();const{YRS,YD}=D;const aoa=[['P&L — '+name],[]];aoa.push(['','ИТОГО',...YRS]);
+[['Выручка','rev'],['Bar COGS','bc'],['OPEX','opex'],['EBITDA','eb'],['Амортизация','amort'],['Налог','tax_v'],['ЧП','np'],['CF','ocf']].forEach(([l,k])=>aoa.push([l,YRS.reduce((s,yr)=>s+YD[yr][k],0),...YRS.map(yr=>YD[yr][k])]));
+const ws=XLSX.utils.aoa_to_sheet(aoa);ws['!cols']=[{wch:20},...YRS.map(()=>({wch:14}))];XLSX.utils.book_append_sheet(wb,ws,'P&L');XLSX.writeFile(wb,name+'_'+new Date().toISOString().slice(0,10)+'.xlsx')}
+
+// Firebase (shared with opipara project, separate key)
+const fbCfg={apiKey:"AIzaSyB19LxA77AtCyA4BXS6zcnbjStXCBLeHng",authDomain:"model-finance-4f24d.firebaseapp.com",databaseURL:"https://model-finance-4f24d-default-rtdb.europe-west1.firebasedatabase.app",projectId:"model-finance-4f24d"};
+firebase.initializeApp(fbCfg);const db=firebase.database();const archRef=db.ref('karaoke_archive');
+let fbA={};
+const AI=['c1','c2','c3','c4','c5','c6','c7','c8','rooms','hrs','phr','occ','dmo','rv_bar','rv_dec','rv_pty','rv_gam','ss1','ss2','ss3','ss4','ss5','ss6','ss7','ss8','ss9','ss10','ss11','ss12','o_rent','o_staff','o_bpct','o_util','o_lic','o_mkt','o_ins','o_mnt','o_con','iva','tax','amy','grv','gre','hor','p1i','p1a','p2i','p2a','dtx'];
+function fbLoad(){archRef.on('value',s=>{fbA=s.val()||{};archRender()})}
+function archSave(){try{let n=$('arch_name')?.value?.trim();if(!n){alert('Введите название');return}n=n.replace(/[.#$/\[\]]/g,'-');const d={};AI.forEach(id=>{const e=$(id);if(e)d[id]=e.value});fbA[n]={data:d,date:new Date().toISOString().slice(0,16)};const k=Object.keys(fbA);if(k.length>10){const s=k.sort((a,b)=>(fbA[a].date||'')>(fbA[b].date||'')?1:-1);while(Object.keys(fbA).length>10)delete fbA[s.shift()]}archRef.set(fbA).then(()=>{$('arch_name').value='';alert('Сохранено!')}).catch(e=>alert('Ошибка: '+e.message))}catch(e){alert(e.message)}}
+function archLoad(n){const v=fbA[n];if(!v)return;const dis=[];AI.forEach(id=>{const e=$(id);if(e){if(e.disabled){dis.push(id);e.disabled=false}if(v.data[id]!==undefined)e.value=v.data[id]}});calc();dis.forEach(id=>{const e=$(id);if(e)e.disabled=true})}
+function archDelete(n){if(!confirm('Удалить?'))return;delete fbA[n];archRef.set(fbA)}
+function archRename(o){let n=prompt('Новое:',o);if(!n||n===o)return;n=n.replace(/[.#$/\[\]]/g,'-');if(fbA[o]){fbA[n]=fbA[o];delete fbA[o];archRef.set(fbA)}}
+function archRender(){const a=fbA;const k=Object.keys(a);if(!k.length){$('arch_list').innerHTML='<p style="color:var(--dim)">Нет версий</p>';return}let h='';k.forEach(n=>{const d=a[n].date||'';h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;padding:4px 8px;background:#0d1820;border-radius:4px"><span style="flex:1;font-size:11px">'+n+'</span><span style="font-size:9px;color:var(--dim)">'+d+'</span><button class="btn" style="padding:3px 8px;font-size:10px" onclick="archLoad(\''+n+'\')">▶</button>'+(userRole==='admin'?'<button class="btn" style="padding:3px 8px;font-size:10px;background:#2a3a4a" onclick="archRename(\''+n+'\')">✎</button><button class="btn" style="padding:3px 8px;font-size:10px;background:#c62828" onclick="archDelete(\''+n+'\')">×</button>':'')+'</div>'});$('arch_list').innerHTML=h}
+
+try{calc()}catch(e){console.error(e);alert('Ошибка: '+e.message)}
+fbLoad();
+</script>
+</body>
+</html>
