@@ -116,6 +116,7 @@ h1{font-size:16px;margin-bottom:3px}
 <div class="row"><label>Мебель и тематика</label><input type="number" id="c5" value="30000" oninput="calc()"><span class="unit">€</span></div>
 <div class="row"><label>Лицензии и юридика</label><input type="number" id="c6" value="10000" oninput="calc()"><span class="unit">€</span></div>
 <div class="row"><label>Депозит + pre-opening</label><input type="number" id="c7" value="25000" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Trespasse (выкуп бизнеса)</label><input type="number" id="c9" value="0" oninput="calc()"><span class="unit">€</span></div>
 <div class="row"><label>Оборотный капитал</label><input type="number" id="c8" value="30000" oninput="calc()"><span class="unit">€</span></div>
 <div class="row"><label><b>ИТОГО CAPEX</b></label><span class="val accent" id="capex_t"></span></div>
 </div></div>
@@ -123,25 +124,35 @@ h1{font-size:16px;margin-bottom:3px}
 <div class="section collapsible open"><div class="section-header" onclick="toggle(this)">Выручка — комнаты<span class="toggle-arrow">▼</span></div><div class="section-body">
 <div class="row"><label>Кол-во комнат</label><input type="number" id="rooms" value="7" oninput="calc()"></div>
 <div class="row"><label>Часов работы/день</label><input type="number" id="hrs" value="10" oninput="calc()"></div>
-<div class="row"><label>Цена/час (средняя)</label><input type="number" id="phr" value="60" oninput="calc()"><span class="unit">€</span></div>
-<div class="row"><label>Загрузка (стабилиз.)</label><input type="number" id="occ" value="62" oninput="calc()"><span class="unit">%</span></div>
-<div class="row"><label>Дней/мес</label><input type="number" id="dmo" value="30" oninput="calc()"></div>
+<div class="row"><label>Цена/час будни</label><input type="number" id="phr_wd" value="50" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Цена/час выходные</label><input type="number" id="phr_we" value="75" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Будних дней/мес</label><input type="number" id="wd" value="22" oninput="calc()"></div>
+<div class="row"><label>Выходных дней/мес</label><input type="number" id="we" value="8" oninput="calc()"></div>
+<div class="row"><label>Среднее людей в комнате</label><input type="number" id="ppl" value="10" oninput="calc()"><span class="unit">чел.</span></div>
+<div class="row"><label><b>Ср. цена/час (взвешенная)</b></label><span class="val accent" id="avg_phr"></span></div>
 <div class="row"><label><b>Выручка комнат/мес</b></label><span class="val accent" id="rv_rooms"></span></div>
+<div class="row"><label><b>Бронирований/день</b></label><span class="val accent" id="book_day"></span></div>
+<div class="row"><label><b>Гостей/день</b></label><span class="val accent" id="guests_day"></span></div>
+<div class="row"><label><b>Гостей/мес</b></label><span class="val accent" id="guests_mo"></span></div>
 </div></div>
 
 <div class="section collapsible open"><div class="section-header" onclick="toggle(this)">Выручка — бар и доп.<span class="toggle-arrow">▼</span></div><div class="section-body">
-<div class="row"><label>Бар</label><input type="number" id="rv_bar" value="12000" oninput="calc()"><span class="unit">€/м</span></div>
+<p style="color:var(--accent);font-size:11px;margin-bottom:6px;font-weight:600">Бар</p>
+<div class="row"><label>Ср. чек бара</label><input type="number" id="bar_chk" value="15" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Доля гостей заказывающих</label><input type="number" id="bar_pct" value="70" oninput="calc()"><span class="unit">%</span></div>
+<div class="row"><label><b>Выручка бара/мес</b></label><span class="val accent" id="rv_bar_calc"></span></div>
+<p style="color:var(--accent);font-size:11px;margin:10px 0 6px;font-weight:600">Дополнительные услуги</p>
 <div class="row"><label>Декор/тематика</label><input type="number" id="rv_dec" value="3000" oninput="calc()"><span class="unit">€/м</span></div>
 <div class="row"><label>Party packs</label><input type="number" id="rv_pty" value="2500" oninput="calc()"><span class="unit">€/м</span></div>
 <div class="row"><label>Gaming add-on</label><input type="number" id="rv_gam" value="1500" oninput="calc()"><span class="unit">€/м</span></div>
 <div class="row"><label><b>ИТОГО выручка/мес (gross)</b></label><span class="val green" id="rv_tot"></span></div>
 </div></div>
 
-<div class="section collapsible open"><div class="section-header" onclick="toggle(this)">Сезонность<span class="toggle-arrow">▼</span></div><div class="section-body">
-<p style="color:var(--muted);margin-bottom:8px;font-size:11px">1.0 = базовая загрузка</p>
+<div class="section collapsible open"><div class="section-header" onclick="toggle(this)">Загрузка по месяцам (%)<span class="toggle-arrow">▼</span></div><div class="section-body">
+<p style="color:var(--muted);margin-bottom:8px;font-size:11px">Загрузка комнат по месяцам (%). 62% = базовая.</p>
 <div class="season-grid">
 <div class="ml">Янв</div><div class="ml">Фев</div><div class="ml">Мар</div><div class="ml">Апр</div><div class="ml">Май</div><div class="ml">Июн</div><div class="ml">Июл</div><div class="ml">Авг</div><div class="ml">Сен</div><div class="ml">Окт</div><div class="ml">Ноя</div><div class="ml">Дек</div>
-<input type="number" id="ss1" value="0.80" step="0.05" oninput="calc()"><input type="number" id="ss2" value="0.85" step="0.05" oninput="calc()"><input type="number" id="ss3" value="0.90" step="0.05" oninput="calc()"><input type="number" id="ss4" value="0.95" step="0.05" oninput="calc()"><input type="number" id="ss5" value="1.00" step="0.05" oninput="calc()"><input type="number" id="ss6" value="1.10" step="0.05" oninput="calc()"><input type="number" id="ss7" value="0.85" step="0.05" oninput="calc()"><input type="number" id="ss8" value="0.75" step="0.05" oninput="calc()"><input type="number" id="ss9" value="1.00" step="0.05" oninput="calc()"><input type="number" id="ss10" value="1.05" step="0.05" oninput="calc()"><input type="number" id="ss11" value="1.15" step="0.05" oninput="calc()"><input type="number" id="ss12" value="1.20" step="0.05" oninput="calc()">
+<input type="number" id="ss1" value="35" oninput="calc()"><input type="number" id="ss2" value="38" oninput="calc()"><input type="number" id="ss3" value="42" oninput="calc()"><input type="number" id="ss4" value="48" oninput="calc()"><input type="number" id="ss5" value="55" oninput="calc()"><input type="number" id="ss6" value="60" oninput="calc()"><input type="number" id="ss7" value="45" oninput="calc()"><input type="number" id="ss8" value="40" oninput="calc()"><input type="number" id="ss9" value="55" oninput="calc()"><input type="number" id="ss10" value="58" oninput="calc()"><input type="number" id="ss11" value="62" oninput="calc()"><input type="number" id="ss12" value="65" oninput="calc()">
 </div></div></div>
 
 <div class="section collapsible"><div class="section-header" onclick="toggle(this)">OPEX (ежемесячные расходы)<span class="toggle-arrow">▼</span></div><div class="section-body">
@@ -154,6 +165,12 @@ h1{font-size:16px;margin-bottom:3px}
 <div class="row"><label>Страховка+бухгалтерия</label><input type="number" id="o_ins" value="1000" oninput="calc()"><span class="unit">€</span></div>
 <div class="row"><label>Обслуживание+расходники</label><input type="number" id="o_mnt" value="900" oninput="calc()"><span class="unit">€</span></div>
 <div class="row"><label>Консоли/игры</label><input type="number" id="o_con" value="75" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Вывоз мусора</label><input type="number" id="o_trash" value="200" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Химия/расходники</label><input type="number" id="o_chem" value="300" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>IT/интернет/софт</label><input type="number" id="o_it" value="350" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Дезобработка</label><input type="number" id="o_dez" value="200" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Текстиль/расходники комнат</label><input type="number" id="o_txt" value="300" oninput="calc()"><span class="unit">€</span></div>
+<div class="row"><label>Непредвиденные</label><input type="number" id="o_misc" value="500" oninput="calc()"><span class="unit">€</span></div>
 <div class="row"><label><b>ИТОГО OPEX фикс.</b></label><span class="val accent" id="opex_f"></span></div>
 </div></div>
 
@@ -161,7 +178,7 @@ h1{font-size:16px;margin-bottom:3px}
 <div class="row"><label>IVA</label><input type="number" id="iva" value="23" oninput="calc()"><span class="unit">%</span></div>
 <div class="row"><label>IRC (налог на прибыль)</label><input type="number" id="tax" value="21" oninput="calc()"><span class="unit">%</span></div>
 <div class="row"><label>Амортизация</label><input type="number" id="amy" value="5" oninput="calc()"><span class="unit">лет</span></div>
-<div class="row"><label>Рост выручки г/г</label><input type="number" id="grv" value="1.05" step="0.05" oninput="calc()"><span class="unit">×</span></div>
+<div class="row"><label>Рост выручки г/г</label><input type="number" id="grv" value="1.05" oninput="calc()"><span class="unit">×</span></div>
 <div class="row"><label>Рост расходов г/г</label><input type="number" id="gre" value="1.03" step="0.01" oninput="calc()"><span class="unit">×</span></div>
 <div class="row"><label>Горизонт</label><input type="number" id="hor" value="5" oninput="calc()"><span class="unit">лет</span></div>
 </div></div>
@@ -213,16 +230,31 @@ function toggleYear(t,y){document.querySelectorAll('#'+t+' tr.month-row.yr-'+y).
 
 let D={};
 function calc(){
-const capex=V('c1')+V('c2')+V('c3')+V('c4')+V('c5')+V('c6')+V('c7')+V('c8');
+const capex=V('c1')+V('c2')+V('c3')+V('c4')+V('c5')+V('c6')+V('c7')+V('c8')+V('c9');
 $('capex_t').textContent=fmt(capex)+' €';
-const rooms=V('rooms'),hrs=V('hrs'),phr=V('phr'),occ=V('occ')/100,dmo=V('dmo');
-const rvR=rooms*hrs*phr*occ*dmo;$('rv_rooms').textContent=fmt(rvR)+' €';
-const rvB=V('rv_bar'),rvD=V('rv_dec'),rvP=V('rv_pty'),rvG=V('rv_gam');
+const sea=[];for(let i=1;i<=12;i++)sea.push(V('ss'+i)/100);
+const rooms=V('rooms'),hrs=V('hrs'),phrWd=V('phr_wd'),phrWe=V('phr_we'),wd=V('wd'),we=V('we');
+const avgOcc=sea.reduce((a,b)=>a+b,0)/12;
+const occ=avgOcc;
+const rvR=rooms*hrs*occ*(phrWd*wd+phrWe*we);
+const avgPhr=(phrWd*wd+phrWe*we)/(wd+we);
+$('avg_phr').textContent=Math.round(avgPhr)+' €';
+$('rv_rooms').textContent=fmt(rvR)+' €';
+const ppl=V('ppl');
+const bookDay=rooms*hrs*occ;
+const guestsDay=Math.round(bookDay*ppl);
+const guestsMo=Math.round(guestsDay*(wd+we));
+$('book_day').textContent=bookDay.toFixed(1)+' комнато-часов';
+$('guests_day').textContent=guestsDay+' чел.';
+$('guests_mo').textContent=fmt(guestsMo)+' чел.';
+const totalGuests=rooms*hrs*occ*(wd+we);
+const rvB=totalGuests*V('bar_chk')*V('bar_pct')/100;
+$('rv_bar_calc').textContent=fmt(rvB)+' €';
+const rvD=V('rv_dec'),rvP=V('rv_pty'),rvG=V('rv_gam');
 const rvX=rvB+rvD+rvP+rvG,rvT=rvR+rvX;$('rv_tot').textContent=fmt(rvT)+' €';
-const oR=V('o_rent'),oS=V('o_staff'),oBp=V('o_bpct')/100,oU=V('o_util'),oL=V('o_lic'),oM=V('o_mkt'),oI=V('o_ins'),oN=V('o_mnt'),oC=V('o_con');
-const opF=oR+oS+oU+oL+oM+oI+oN+oC;$('opex_f').textContent=fmt(opF)+' €';
+const oR=V('o_rent'),oS=V('o_staff'),oBp=V('o_bpct')/100,oU=V('o_util'),oL=V('o_lic'),oM=V('o_mkt'),oI=V('o_ins'),oN=V('o_mnt'),oC=V('o_con','o_trash','o_chem','o_it','o_dez','o_txt','o_misc');
+const oT=V('o_trash'),oCh=V('o_chem'),oIT=V('o_it'),oDz=V('o_dez'),oTx=V('o_txt'),oMs=V('o_misc');const opF=oR+oS+oU+oL+oM+oI+oN+oC+oT+oCh+oIT+oDz+oTx+oMs;$('opex_f').textContent=fmt(opF)+' €';
 const iva=V('iva')/100,tx=V('tax')/100,amY=V('amy'),grv=V('grv'),gre=V('gre'),hor=Math.max(1,Math.min(15,Math.round(V('hor'))));
-const sea=[];for(let i=1;i<=12;i++)sea.push(V('ss'+i));
 const amM=capex/(amY*12);
 const YRS=[];for(let i=0;i<hor;i++)YRS.push(2026+i);
 const MIY=[5,...Array(hor-1).fill(12)],MS=[7,...Array(hor-1).fill(0)];
@@ -230,12 +262,12 @@ let YD={};
 for(let yi=0;yi<hor;yi++){const yr=YRS[yi],nmx=MIY[yi],ms=MS[yi];
 const cG=Math.pow(grv,yi),cE=Math.pow(gre,yi);let mo=[];
 for(let m=0;m<nmx;m++){const mi=ms+m,sc=sea[mi];
-const mRG=(rvR*sc+rvX*sc)*cG,mRN=mRG/(1+iva),mBC=rvB*sc*cG/(1+iva)*oBp;
+const mRG=(rooms*hrs*sc*(phrWd*wd+phrWe*we)+rvX*sc)*cG,mRN=mRG/(1+iva),mBC=rvB*sc*cG/(1+iva)*oBp;
 const mOp=opF*cE+mBC,mEB=mRN-mOp,mPT=mEB-amM,mTx=Math.max(mPT*tx,0),mNP=mEB-amM-mTx,mOCF=mEB-mTx;
 mo.push({month:MN[mi],rev:mRN,bc:-mBC,opex:-opF*cE,eb:mEB,amort:-amM,tax_v:-mTx,np:mNP,ocf:mOCF})}
 const sm=k=>mo.reduce((s,m)=>s+m[k],0);
 YD[yr]={months:mo,rev:sm('rev'),bc:sm('bc'),opex:sm('opex'),eb:sm('eb'),amort:sm('amort'),tax_v:sm('tax_v'),np:sm('np'),ocf:sm('ocf')}}
-D={YD,YRS,MIY,MS,capex,rvT,rvR,rvX,rvB,opF,oBp,iva,tx,amM,sea,p1i:V('p1i')/100,p2i:V('p2i')/100,p1a:V('p1a')/100,p2a:V('p2a')/100,dtx:V('dtx')/100};
+D={YD,YRS,MIY,MS,capex,rvT,rvR,rvX,rvB,opF,oBp,iva,tx,amM,sea,rooms,hrs,occ,phrWd,phrWe,wd,we,p1i:V('p1i')/100,p2i:V('p2i')/100,p1a:V('p1a')/100,p2a:V('p2a')/100,dtx:V('dtx')/100};
 renderPL();renderPartners();renderAnalysis()}
 
 function renderPL(){const{YD,YRS}=D;const t={rev:0,eb:0,np:0,ocf:0};YRS.forEach(yr=>{t.rev+=YD[yr].rev;t.eb+=YD[yr].eb;t.np+=YD[yr].np;t.ocf+=YD[yr].ocf});
@@ -267,17 +299,17 @@ h+='</table>';$('p-content').innerHTML=h}
 
 function renderAnalysis(){const{capex,rvT,rvR,rvX,rvB,opF,oBp,iva,sea}=D;
 const rN=rvT/(1+iva),bc=rvB/(1+iva)*oBp,eb=rN-opF-bc;
-const beOcc=rN>0?(opF+bc)/rN*V('occ'):null;
-$('an-kpi').innerHTML='<div class="kpi"><div class="label">EBITDA/мес</div><div class="value '+(eb>=0?'green':'red')+'">'+fmt(eb)+' €</div><div class="sub">'+(rN?(eb/rN*100).toFixed(1):0)+'%</div></div><div class="kpi"><div class="label">Breakeven загрузка</div><div class="value accent">'+(beOcc!==null?beOcc.toFixed(0)+'%':'N/A')+'</div><div class="sub">Текущая: '+V('occ')+'%</div></div><div class="kpi"><div class="label">Окупаемость</div><div class="value accent">'+(eb>0?(capex/eb).toFixed(0)+' мес':'N/A')+'</div></div><div class="kpi"><div class="label">CAPEX</div><div class="value">'+fmt(capex)+' €</div></div>';
+const beOcc=rN>0?(opF+bc)/rN*100:null;
+$('an-kpi').innerHTML='<div class="kpi"><div class="label">EBITDA/мес</div><div class="value '+(eb>=0?'green':'red')+'">'+fmt(eb)+' €</div><div class="sub">'+(rN?(eb/rN*100).toFixed(1):0)+'%</div></div><div class="kpi"><div class="label">Breakeven загрузка</div><div class="value accent">'+(beOcc!==null?beOcc.toFixed(0)+'%':'N/A')+'</div><div class="sub">Текущая: '+Math.round(sea.reduce((a,b)=>a+b,0)/12*100)+'%</div></div><div class="kpi"><div class="label">Окупаемость</div><div class="value accent">'+(eb>0?(capex/eb).toFixed(0)+' мес':'N/A')+'</div></div><div class="kpi"><div class="label">CAPEX</div><div class="value">'+fmt(capex)+' €</div></div>';
 // Sensitivity
 const bP=V('phr'),bO=V('occ'),ps=[-20,-10,0,10,20,30],os=[-20,-10,0,10,15,20];
 let h='<tr><th>€/ч \\ Загр.</th>';os.forEach(o=>h+='<th>'+(bO+o)+'%</th>');h+='</tr>';
-ps.forEach(p=>{const pr=bP+p;h+='<tr><td style="font-weight:600">'+pr+'€</td>';os.forEach(o=>{const oc=(bO+o)/100;const rv=(V('rooms')*V('hrs')*pr*oc*V('dmo')+rvX)/(1+iva);const e=rv-opF-rvB/(1+iva)*oBp;let bg='';if(e<0)bg='background:#3a0505;color:var(--red)';else if(e<10000)bg='background:#3a2200;color:var(--orange)';else if(e<20000)bg='background:#1a2a1a';else bg='background:#1b3a1b;color:var(--green)';const cur=p===0&&o===0?' font-weight:700;border:2px solid var(--accent)':'';h+='<td style="'+bg+';'+cur+'">'+fmt(e)+'</td>'});h+='</tr>'});
+ps.forEach(p=>{const pr=bP+p;h+='<tr><td style="font-weight:600">'+pr+'€</td>';os.forEach(o=>{const oc=(bO+o)/100;const rv=(V('rooms')*V('hrs')*oc*(pr*wd+pr*1.5*we)+rvX*oc/occ)/(1+iva);const e=rv-opF-rvB/(1+iva)*oBp;let bg='';if(e<0)bg='background:#3a0505;color:var(--red)';else if(e<10000)bg='background:#3a2200;color:var(--orange)';else if(e<20000)bg='background:#1a2a1a';else bg='background:#1b3a1b;color:var(--green)';const cur=p===0&&o===0?' font-weight:700;border:2px solid var(--accent)':'';h+='<td style="'+bg+';'+cur+'">'+fmt(e)+'</td>'});h+='</tr>'});
 $('sens-t').innerHTML=h;
 // Monthly breakeven
 let hm='<tr><th>Месяц</th><th>Сезон.</th><th>Выручка</th><th>OPEX</th><th>EBITDA</th><th>BE загр.</th></tr>';
 for(let m=0;m<12;m++){const sc=sea[m];const rv=(rvR*sc+rvX*sc)/(1+iva);const mbc=rvB*sc/(1+iva)*oBp;const mop=opF+mbc;const meb=rv-mop;
-const K=(rvR+rvX)/(1+iva);const be=K>0&&sc>0?mop/(K*sc)*100:null;
+const K=rvT/(1+iva);const be=K>0&&sc>0?mop/(K*sc)*100:null;
 hm+='<tr><td style="font-weight:600">'+MN[m]+'</td><td>'+sc.toFixed(2)+'×</td><td>'+fmt(rv)+'</td><td>'+fmt(mop)+'</td><td style="color:'+(meb>=0?'var(--green)':'var(--red)')+';font-weight:600">'+fmt(meb)+'</td><td style="color:'+(be!==null&&V('occ')>=be?'var(--green)':'var(--red)')+';font-weight:600">'+(be!==null?be.toFixed(0)+'%':'—')+'</td></tr>'}
 $('mo-be').innerHTML=hm}
 
@@ -289,7 +321,7 @@ const ws=XLSX.utils.aoa_to_sheet(aoa);ws['!cols']=[{wch:20},...YRS.map(()=>({wch
 const fbCfg={apiKey:"AIzaSyB19LxA77AtCyA4BXS6zcnbjStXCBLeHng",authDomain:"model-finance-4f24d.firebaseapp.com",databaseURL:"https://model-finance-4f24d-default-rtdb.europe-west1.firebasedatabase.app",projectId:"model-finance-4f24d"};
 firebase.initializeApp(fbCfg);const db=firebase.database();const archRef=db.ref('karaoke_archive');
 let fbA={};
-const AI=['c1','c2','c3','c4','c5','c6','c7','c8','rooms','hrs','phr','occ','dmo','rv_bar','rv_dec','rv_pty','rv_gam','ss1','ss2','ss3','ss4','ss5','ss6','ss7','ss8','ss9','ss10','ss11','ss12','o_rent','o_staff','o_bpct','o_util','o_lic','o_mkt','o_ins','o_mnt','o_con','iva','tax','amy','grv','gre','hor','p1i','p1a','p2i','p2a','dtx'];
+const AI=['c1','c2','c3','c4','c5','c6','c7','c8','c9','rooms','hrs','phr_wd','phr_we','ppl','wd','we','bar_chk','bar_pct','rv_dec','rv_pty','rv_gam','ss1','ss2','ss3','ss4','ss5','ss6','ss7','ss8','ss9','ss10','ss11','ss12','o_rent','o_staff','o_bpct','o_util','o_lic','o_mkt','o_ins','o_mnt','o_con','o_trash','o_chem','o_it','o_dez','o_txt','o_misc','iva','tax','amy','grv','gre','hor','p1i','p1a','p2i','p2a','dtx'];
 function fbLoad(){archRef.on('value',s=>{fbA=s.val()||{};archRender()})}
 function archSave(){try{let n=$('arch_name')?.value?.trim();if(!n){alert('Введите название');return}n=n.replace(/[.#$/\[\]]/g,'-');const d={};AI.forEach(id=>{const e=$(id);if(e)d[id]=e.value});fbA[n]={data:d,date:new Date().toISOString().slice(0,16)};const k=Object.keys(fbA);if(k.length>10){const s=k.sort((a,b)=>(fbA[a].date||'')>(fbA[b].date||'')?1:-1);while(Object.keys(fbA).length>10)delete fbA[s.shift()]}archRef.set(fbA).then(()=>{$('arch_name').value='';alert('Сохранено!')}).catch(e=>alert('Ошибка: '+e.message))}catch(e){alert(e.message)}}
 function archLoad(n){const v=fbA[n];if(!v)return;const dis=[];AI.forEach(id=>{const e=$(id);if(e){if(e.disabled){dis.push(id);e.disabled=false}if(v.data[id]!==undefined)e.value=v.data[id]}});calc();dis.forEach(id=>{const e=$(id);if(e)e.disabled=true})}
